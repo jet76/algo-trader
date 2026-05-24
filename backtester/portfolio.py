@@ -64,3 +64,28 @@ class Portfolio:
     def current_position(self, symbol: str) -> int:
         pos = self.positions.get(symbol)
         return pos.quantity if pos else 0
+
+    def trade_log(self) -> pd.DataFrame:
+        """Return a DataFrame of completed round-trip trades."""
+        rows = []
+        open_fills: Dict[str, Fill] = {}
+        for fill in self.fills:
+            if fill.quantity > 0:
+                open_fills[fill.symbol] = fill
+            elif fill.quantity < 0 and fill.symbol in open_fills:
+                entry = open_fills.pop(fill.symbol)
+                qty = abs(fill.quantity)
+                pnl = (fill.price - entry.price) * qty - fill.commission - entry.commission
+                rows.append(
+                    {
+                        "symbol": fill.symbol,
+                        "entry_date": entry.date,
+                        "entry_price": round(entry.price, 4),
+                        "exit_date": fill.date,
+                        "exit_price": round(fill.price, 4),
+                        "qty": qty,
+                        "pnl": round(pnl, 2),
+                        "return_pct": round((fill.price - entry.price) / entry.price * 100, 2),
+                    }
+                )
+        return pd.DataFrame(rows)
