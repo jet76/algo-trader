@@ -31,8 +31,8 @@ class DataFeed:
     def _load_mock(self, start: str, end: str) -> None:
         """Generate synthetic random-walk OHLCV data for testing without network access."""
         dates = pd.bdate_range(start=start, end=end)
-        rng = np.random.default_rng(seed=42)
         for symbol in self.symbols:
+            rng = np.random.default_rng(seed=abs(hash(symbol)) % 2**32)
             n = len(dates)
             close = 100.0 * np.exp(np.cumsum(rng.normal(0.0003, 0.015, n)))
             high = close * (1 + rng.uniform(0, 0.02, n))
