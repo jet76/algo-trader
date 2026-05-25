@@ -27,7 +27,7 @@ from strategies.stochastic import StochasticStrategy
 from strategies.triple_sma import TripleSmaStrategy
 from strategies.vwap_cross import VwapCrossStrategy
 
-SYMBOLS = ["MSFT", "AAPL", "GOOGL", "AMZN"]
+SYMBOLS = ["MSFT", "AAPL", "GOOGL", "AMZN", "JPM", "XOM", "SPY", "GLD"]
 START = "2022-01-01"
 END = "2024-01-01"
 INITIAL_CASH = 10_000.0

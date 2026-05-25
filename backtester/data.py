@@ -4,6 +4,26 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
+# (daily_drift, daily_volatility) — roughly calibrated to real-world characteristics
+# daily_vol = annual_vol / sqrt(252)
+_MOCK_PROFILES = {
+    # Tech — high vol, strong drift
+    "MSFT": (0.00044, 0.016), "AAPL": (0.00036, 0.018), "GOOGL": (0.00036, 0.017),
+    "NVDA": (0.00060, 0.030), "META": (0.00036, 0.022),
+    # Finance — moderate vol, modest drift
+    "JPM":  (0.00028, 0.014), "GS":   (0.00028, 0.016), "BAC":  (0.00020, 0.015),
+    # Energy — cyclical, lower drift
+    "XOM":  (0.00020, 0.016), "CVX":  (0.00020, 0.015),
+    # Healthcare — defensive, low vol
+    "JNJ":  (0.00016, 0.010), "PFE":  (0.00012, 0.013), "UNH":  (0.00028, 0.012),
+    # Consumer / retail
+    "AMZN": (0.00036, 0.022), "TSLA": (0.00024, 0.035), "WMT":  (0.00016, 0.010),
+    # ETFs — smoothed by diversification
+    "SPY":  (0.00032, 0.010), "QQQ":  (0.00040, 0.013), "DIA":  (0.00028, 0.009),
+    "GLD":  (0.00012, 0.007), "TLT":  (0.00004, 0.007), "XLE":  (0.00016, 0.015),
+}
+_DEFAULT_PROFILE = (0.00028, 0.015)
+
 
 class DataFeed:
     def __init__(
@@ -29,14 +49,14 @@ class DataFeed:
             self.data[symbol] = df
 
     def _load_mock(self, start: str, end: str) -> None:
-        """Generate synthetic random-walk OHLCV data for testing without network access."""
         dates = pd.bdate_range(start=start, end=end)
         for symbol in self.symbols:
+            drift, vol = _MOCK_PROFILES.get(symbol, _DEFAULT_PROFILE)
             rng = np.random.default_rng(seed=abs(hash(symbol)) % 2**32)
             n = len(dates)
-            close = 100.0 * np.exp(np.cumsum(rng.normal(0.0003, 0.015, n)))
-            high = close * (1 + rng.uniform(0, 0.02, n))
-            low = close * (1 - rng.uniform(0, 0.02, n))
+            close = 100.0 * np.exp(np.cumsum(rng.normal(drift, vol, n)))
+            high = close * (1 + rng.uniform(0, vol * 1.5, n))
+            low  = close * (1 - rng.uniform(0, vol * 1.5, n))
             open_ = low + rng.uniform(0, 1, n) * (high - low)
             volume = rng.integers(1_000_000, 10_000_000, n).astype(float)
             self.data[symbol] = pd.DataFrame(
