@@ -15,11 +15,16 @@ import numpy as np
 
 from backtester import BacktestEngine, DataFeed, compute_metrics
 from strategies.bollinger_band import BollingerBandStrategy
+from strategies.bollinger_rsi import BollingerRsiStrategy
+from strategies.ema_cross import EmaCrossStrategy
+from strategies.macd_only import MacdOnlyStrategy
 from strategies.obv_trend import ObvTrendStrategy
 from strategies.rsi_macd import RsiMacdStrategy
 from strategies.rsi_only import RsiOnlyStrategy
+from strategies.roc_momentum import RocMomentumStrategy
 from strategies.sma_cross import SmaCrossStrategy
 from strategies.stochastic import StochasticStrategy
+from strategies.triple_sma import TripleSmaStrategy
 from strategies.vwap_cross import VwapCrossStrategy
 
 SYMBOLS = ["MSFT", "AAPL", "GOOGL", "AMZN"]
@@ -29,13 +34,28 @@ INITIAL_CASH = 10_000.0
 USE_MOCK = os.environ.get("MOCK_DATA", "0") == "1"
 
 STRATEGIES: dict[str, Callable] = {
+    # Trend following — SMA/EMA
+    "SmaCross(5,20)":    lambda: SmaCrossStrategy(fast=5, slow=20),
     "SmaCross(20,50)":   lambda: SmaCrossStrategy(fast=20, slow=50),
-    "SmaCross(10,30)":   lambda: SmaCrossStrategy(fast=10, slow=30),
+    "SmaCross(50,200)":  lambda: SmaCrossStrategy(fast=50, slow=200),
+    "EmaCross(12,26)":   lambda: EmaCrossStrategy(fast=12, slow=26),
+    "EmaCross(5,20)":    lambda: EmaCrossStrategy(fast=5, slow=20),
+    "TripleSma(10,30,60)": lambda: TripleSmaStrategy(fast=10, medium=30, slow=60),
+    # Momentum
+    "MacdOnly":          lambda: MacdOnlyStrategy(),
     "RsiMacd":           lambda: RsiMacdStrategy(),
-    "RsiOnly":           lambda: RsiOnlyStrategy(),
+    "RocMomentum(10)":   lambda: RocMomentumStrategy(period=10),
+    "RocMomentum(20)":   lambda: RocMomentumStrategy(period=20),
+    # Mean reversion
+    "RsiOnly(30,70)":    lambda: RsiOnlyStrategy(oversold=30, overbought=70),
+    "RsiOnly(40,60)":    lambda: RsiOnlyStrategy(oversold=40, overbought=60),
     "Bollinger(20)":     lambda: BollingerBandStrategy(window=20),
+    "Bollinger(10)":     lambda: BollingerBandStrategy(window=10),
+    "BollingerRsi":      lambda: BollingerRsiStrategy(),
+    "Stochastic(20,80)": lambda: StochasticStrategy(oversold=20, overbought=80),
+    "Stochastic(30,70)": lambda: StochasticStrategy(oversold=30, overbought=70),
+    # Volume
     "VwapCross":         lambda: VwapCrossStrategy(),
-    "Stochastic":        lambda: StochasticStrategy(),
     "ObvTrend(20)":      lambda: ObvTrendStrategy(window=20),
 }
 
